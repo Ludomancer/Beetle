@@ -34,7 +34,7 @@ public class Painter : MonoBehaviour
     }
 
     public Texture2D sourceBaseTex;
-    private Texture2D[] _canvases = new Texture2D[2];
+    private Texture2D _paintCanvas;
     private Vector2 _dragStart;
     private Vector2 _dragEnd;
     private Vector2 _preDrag;
@@ -43,48 +43,64 @@ public class Painter : MonoBehaviour
     public Color col = Color.black;
     public BrushTool brush = new BrushTool();
     public EraserTool eraser = new EraserTool();
-    public float canvasSize = 512;
     private float _ratio = 1;
-    private int _canvasIndex = 0;
+    private int _paddingLeft;
 
-    void Start()
+
+    private int _currentCanvasSize;
+    private int _lockCount;
+
+    public Texture2D PaintCanvas
     {
-        _canvasIndex = 0;
-        _canvases[0] = Instantiate(sourceBaseTex);
-        _canvases[1] = Instantiate(sourceBaseTex);
+        get { return _paintCanvas; }
+        set
+        {
+            _paintCanvas = value;
+            if (_paintCanvas) SetCanvasSize((int)(Screen.height * 0.8f));
+        }
+    }
+
+    void Awake()
+    {
         brush.hardness = 1;
-        brush.width = 5;
+        brush.width = 8;
+        brush.spacing = 1;
 
         eraser.hardness = 1;
-        eraser.width = 2;
-
-        _ratio = canvasSize / _canvases[0].width;
+        eraser.width = 16;
     }
 
-    public Texture2D GetActiveCanvas()
+    public void SetCanvasSize(int newSize)
     {
-        return _canvases[_canvasIndex];
+        if (PaintCanvas)
+        {
+            _currentCanvasSize = newSize;
+            _ratio = _currentCanvasSize / (float)PaintCanvas.width;
+            _paddingLeft = (int)((Screen.width - _currentCanvasSize) * 0.5f);
+        }
     }
 
-    public void SetActiveCanvass(int index)
+    public void Lock()
     {
-        if (index >= _canvases.Length || index < 0) throw new IndexOutOfRangeException();
-        _canvasIndex = index;
+        _lockCount++;
+    }
+
+    public void Unlock(bool force = false)
+    {
+        if (force) _lockCount = 0;
+        else if (_lockCount > 0) _lockCount--;
     }
 
     void OnGUI()
     {
-        int padding = 100;
-        for (int i = 0; i < _canvases.Length; i++)
-        {
-            GUI.DrawTexture(new Rect(padding, 0, _canvases[i].width * _ratio, _canvases[i].height * _ratio), _canvases[i]);
-            padding += (int)(_canvases[i].width * _ratio) + 25;
-        }
+        if (_lockCount > 0 || !PaintCanvas) return;
+        GUI.DrawTexture(new Rect(_paddingLeft, 0, _currentCanvasSize, _currentCanvasSize), PaintCanvas);
     }
 
     void Update()
     {
-        Rect imgRect = new Rect(5 + 100, 5, GetActiveCanvas().width * _ratio, GetActiveCanvas().height * _ratio);
+        if (_lockCount > 0 || !PaintCanvas) return;
+        Rect imgRect = new Rect(_paddingLeft, 0, _currentCanvasSize, _currentCanvasSize);
         Vector2 mouse = Input.mousePosition;
         mouse.y = Screen.height - mouse.y;
 
@@ -98,9 +114,8 @@ public class Painter : MonoBehaviour
             tool = Tool.Brush;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
-
             if (imgRect.Contains(mouse))
             {
                 _dragStart = mouse - new Vector2(imgRect.x, imgRect.y);
@@ -120,7 +135,7 @@ public class Painter : MonoBehaviour
             }
 
         }
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
         {
             if (_dragStart == Vector2.zero)
             {
@@ -142,7 +157,7 @@ public class Painter : MonoBehaviour
             }
 
         }
-        if (Input.GetMouseButtonUp(0) && _dragStart != Vector2.zero)
+        if ((Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1)) && _dragStart != Vector2.zero)
         {
             _dragStart = Vector2.zero;
             _dragEnd = Vector2.zero;
@@ -157,8 +172,8 @@ public class Painter : MonoBehaviour
         {
             p2 = p1;
         }
-        Drawing.PaintLine(p1, p2, brush.width, col, brush.hardness, GetActiveCanvas());
-        GetActiveCanvas().Apply();
+        Drawing.PaintLine(p1, p2, brush.width, col, brush.hardness, PaintCanvas);
+        PaintCanvas.Apply();
     }
 
     void Eraser(Vector2 p1, Vector2 p2)
@@ -168,8 +183,8 @@ public class Painter : MonoBehaviour
         {
             p2 = p1;
         }
-        Drawing.PaintLine(p1, p2, eraser.width, Color.white, eraser.hardness, GetActiveCanvas());
-        GetActiveCanvas().Apply();
+        Drawing.PaintLine(p1, p2, eraser.width, Color.white, eraser.hardness, PaintCanvas);
+        PaintCanvas.Apply();
     }
 
     public class EraserTool

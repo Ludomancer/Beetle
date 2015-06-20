@@ -2,12 +2,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-
-internal class Beetle
+public class Beetle
 {
 
     #region Enumerations
-    internal enum Part
+    public enum Part
     {
         Leg = 1,
         Head = 2,
@@ -44,9 +43,71 @@ internal class Beetle
 
     #region Methods
 
+    //For debug purposes
+    public bool IsValid(Part part)
+    {
+        switch (part)
+        {
+            case Part.Leg:
+                if (_isBodyDrawn && _legsLeft > 0)
+                {
+                    return true;
+                }
+                return false;
+            case Part.Head:
+                if (_isBodyDrawn && !_isHeadDrawn)
+                {
+                    return true;
+                }
+                return false;
+            case Part.Body:
+                if (!_isBodyDrawn)
+                {
+                    return true;
+                }
+                return false;
+            case Part.Antenna:
+                if (_isBodyDrawn && _isHeadDrawn && _antennasLeft > 0)
+                {
+                    return true;
+                }
+                return false;
+            case Part.Eye:
+                if (_isBodyDrawn && _isHeadDrawn && _eyesLeft > 0)
+                {
+                    return true;
+                }
+                return false;
+            case Part.Wing:
+                if (_isBodyDrawn && _wingsLeft > 0)
+                {
+                    return true;
+                }
+                return false;
+            default: return false;
+        }
+    }
+
+    public void Reset()
+    {
+        _legsLeft = 4;
+        _isHeadDrawn = false;
+        _isBodyDrawn = false;
+        _antennasLeft = 2;
+        _eyesLeft = 2;
+        _wingsLeft = 2;
+    }
+
     public bool TryAction(Part part)
     {
-        Debug.Log(part);
+        Debug.Log("Try: " + part);
+        Debug.Log("_legsLeft: " + _legsLeft);
+        Debug.Log("_isHeadDrawn: " + _isHeadDrawn);
+        Debug.Log("_isBodyDrawn: " + _isBodyDrawn);
+        Debug.Log("_antennasLeft: " + _antennasLeft);
+        Debug.Log("_eyesLeft: " + _eyesLeft);
+        Debug.Log("_wingsLeft: " + _wingsLeft);
+        Debug.Log("----------------------------------");
         switch (part)
         {
             case Part.Leg:

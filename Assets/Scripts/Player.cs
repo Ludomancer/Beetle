@@ -1,22 +1,24 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
- 
-internal class Player {
+
+public class Player
+{
 
     #region Enumerations
- 
-    #endregion
- 
-    #region Events and Delegates
- 
-    #endregion
- 
-    #region Variables
 
+    #endregion
+
+    #region Events and Delegates
+
+    #endregion
+
+    #region Variables
+    [SerializeField]
     private readonly Beetle _beetle = new Beetle();
     private float _score;
 
-    private readonly List<float> _previousScores = new List<float>(); 
+    public readonly List<float> previousScores = new List<float>();
 
     #endregion
 
@@ -32,9 +34,15 @@ internal class Player {
         set { _score = value; }
     }
 
+    public void Reset()
+    {
+        _beetle.Reset();
+        _score = 0;
+    }
+
     public void ArchiveScore()
     {
-        _previousScores.Add(_score);
+        previousScores.Add(_score);
         _score = 0;
     }
 

@@ -19,6 +19,11 @@ internal static class Constants
     internal static Color DICE_ROLL_VALID_COLOR = new Color(0,1,0);
     internal static Color DICE_ROLL_INVALID_COLOR = new Color(1,0,0);
 
+    internal static Color ROUND_PANEL_WINNING_COLOR = new Color(0, 1f, 0,0.5f);
+    internal static Color ROUND_PANEL_NORMAL_COLOR = new Color(1, 1, 1);
+
+    internal const string NEXT_ROUND = "Next Round";
+    internal const string RESTART = "Restart";
     internal const string ROUND_TEXT = "Round {0} of {1}";
     internal const string PLAYER_TURN_TEXT = "Player {0}'s Turn";
     internal const string DRAW_BEETLE_PART = "Player {0}: Draw a Beetle {1}";

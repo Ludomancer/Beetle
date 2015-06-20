@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-internal class GameManager : MonoBehaviour
+internal class GameManager : MonoBehaviour, IPanel
 {
     #region Singleton
 
@@ -44,22 +44,22 @@ internal class GameManager : MonoBehaviour
     #endregion
 
     #region Variables
-
     private Player[] _players = new Player[2] { new Player(), new Player() };
     [SerializeField]
     private State _currentState = State.None;
     private int _playerIndex = 0;
-    private int _currentRound = 1;
+    private int _currentRound = 0;
     [SerializeField]
     private int _numberOfRounds = 5;
 
     public Button diceButton;
     public Button drawingDoneButton;
-
     public Text[] playerScoreTexts;
     public Text informationText;
     public Text drawBeetlePartText;
-    public Image[] _playerBeetleImages;
+    public Image[] playerBeetleImages;
+
+    public bool debugMode;
 
     public Texture2D emptyCanvasTexture;
     #endregion
@@ -78,7 +78,7 @@ internal class GameManager : MonoBehaviour
 
     public Image CurrentBeetleImage
     {
-        get { return _playerBeetleImages[_playerIndex]; }
+        get { return playerBeetleImages[_playerIndex]; }
     }
 
     public State CurrentState
@@ -103,7 +103,7 @@ internal class GameManager : MonoBehaviour
                     drawBeetlePartText.gameObject.SetActive(false);
                     diceButton.GetComponentInChildren<Text>().text = Constants.ROLL_DICE_TEXT;
                     diceButton.GetComponent<Image>().color = Constants.DICE_DEFAULT_COLOR;
-                    informationText.text = string.Format(Constants.PLAYER_TURN_TEXT,(_playerIndex + 1));
+                    informationText.text = string.Format(Constants.PLAYER_TURN_TEXT, (_playerIndex + 1));
                     break;
                 case State.Drawing:
                     Painter.Instance.PaintCanvas = CurrentBeetleImage.sprite.texture;
@@ -123,14 +123,27 @@ internal class GameManager : MonoBehaviour
 
     private void Start()
     {
+        instance = this;
+        Show();
+        Init();
+    }
+
+    public void Init()
+    {
+        _currentRound++;
+        drawingDoneButton.gameObject.SetActive(true);
         drawingDoneButton.GetComponentInChildren<Text>().text = Constants.DONE_DRAWING_TEXT;
+        diceButton.gameObject.SetActive(true);
         diceButton.GetComponentInChildren<Text>().text = Constants.ROLL_DICE_TEXT;
-        for (int i = 0; i < _playerBeetleImages.Length; i++)
+        for (int i = 0; i < playerBeetleImages.Length; i++)
         {
+            if (playerBeetleImages[i].sprite) DestroyImmediate(playerBeetleImages[i].sprite);
             Texture2D tempTexture = Instantiate(emptyCanvasTexture);
-            _playerBeetleImages[i].sprite = Sprite.Create(tempTexture, new Rect(0, 0, tempTexture.width, tempTexture.height), new Vector2(0.5f, 0.5f));
+            playerBeetleImages[i].sprite = Sprite.Create(tempTexture, new Rect(0, 0, tempTexture.width, tempTexture.height), new Vector2(0.5f, 0.5f));
+            playerScoreTexts[i].text = "0";
         }
 
+        _playerIndex = 0;
         CurrentState = State.WaitingDiceRoll;
     }
 
@@ -139,9 +152,14 @@ internal class GameManager : MonoBehaviour
 
     }
 
-    private int RollDice()
+    public void Hide()
     {
-        return Random.Range(1, 6);
+        gameObject.SetActive(false);
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
     }
 
     private void NextPlayer()
@@ -162,7 +180,15 @@ internal class GameManager : MonoBehaviour
         CurrentBeetleImage.sprite = Sprite.Create(currentTexture2D, new Rect(0, 0, currentTexture2D.width, currentTexture2D.height), new Vector2(0.5f, 0.5f));
         if (CurrentPlayer.PlayerBeetle.IsCompleted)
         {
-
+            for (int i = 0; i < _players.Length; i++)
+            {
+                _players[i].ArchiveScore();
+                _players[i].Reset();
+            }
+            RoundOverPanel.Instance.Init(_currentRound, _numberOfRounds, _players);
+            RoundOverPanel.Instance.Show();
+            Painter.Instance.Lock();
+            Hide();
         }
         else
         {
@@ -175,7 +201,7 @@ internal class GameManager : MonoBehaviour
     {
         while (scoreToAdd > 0)
         {
-            float change = Time.deltaTime * 250;
+            float change = Time.deltaTime * 150;
             scoreToAdd -= change;
             CurrentPlayer.Score += change;
             if (scoreToAdd < 0) CurrentPlayer.Score += scoreToAdd;
@@ -186,22 +212,33 @@ internal class GameManager : MonoBehaviour
 
     private IEnumerator RollDiceRotuine()
     {
-        Beetle.Part dice = (Beetle.Part)Random.Range(1, 6);
         int loopCount = Random.Range(5, 7);
         const float minWaitInterval = 0.05f;
         const float maxWaitInterval = 0.5f;
-        diceButton.GetComponent<Image>().color = Constants.DICE_ROLLING_COLOR;
-        int previousRoll = 0;
-        for (int i = 0; i < loopCount; i++)
+        Beetle.Part dice;
+        if (!debugMode)
         {
-            int roll = Random.Range(1, 6);
-            while (previousRoll == roll) roll = Random.Range(1, 6);
-            previousRoll = roll;
-            diceButton.GetComponentInChildren<Text>().text = Constants.GetBeetlePartText((Beetle.Part)roll);
-            yield return new WaitForSeconds(Mathf.Lerp(minWaitInterval, maxWaitInterval, i / (float)loopCount));
+            dice = (Beetle.Part)Random.Range(1, 7);
+            diceButton.GetComponent<Image>().color = Constants.DICE_ROLLING_COLOR;
+            int previousRoll = 0;
+            for (int i = 0; i < loopCount; i++)
+            {
+                int roll = Random.Range(1, 6);
+                while (previousRoll == roll) roll = Random.Range(1, 7);
+                previousRoll = roll;
+                diceButton.GetComponentInChildren<Text>().text = Constants.GetBeetlePartText((Beetle.Part)roll);
+                yield return new WaitForSeconds(Mathf.Lerp(minWaitInterval, maxWaitInterval, i / (float)loopCount));
 
+            }
         }
-
+        else
+        {
+            dice = (Beetle.Part)Random.Range(1, 7);
+            while (!CurrentPlayer.PlayerBeetle.IsValid(dice))
+            {
+                dice = (Beetle.Part)Random.Range(1, 7);
+            }
+        }
         string partText = Constants.GetBeetlePartText(dice);
         diceButton.GetComponentInChildren<Text>().text = partText;
 
@@ -212,13 +249,13 @@ internal class GameManager : MonoBehaviour
             informationText.text = "50";
             informationText.GetComponent<Animator>().SetTrigger("Spawn");
             drawBeetlePartText.text = String.Format(Constants.DRAW_BEETLE_PART, (_playerIndex + 1), partText);
-            yield return new WaitForSeconds(1);
+            if (debugMode) yield return null; else yield return new WaitForSeconds(1);
             CurrentState = State.Drawing;
         }
         else
         {
             diceButton.GetComponent<Image>().color = Constants.DICE_ROLL_INVALID_COLOR;
-            yield return new WaitForSeconds(1);
+            if (debugMode) yield return null; else yield return new WaitForSeconds(1);
             NextPlayer();
             CurrentState = State.WaitingDiceRoll;
         }

@@ -7,8 +7,7 @@ internal class Beetle
 {
 
     #region Enumerations
-
-    internal enum Action
+    internal enum Part
     {
         Leg = 1,
         Head = 2,
@@ -25,6 +24,7 @@ internal class Beetle
     #endregion
 
     #region Variables
+
     private int _legsLeft = 4;
     private bool _isHeadDrawn = false;
     private bool _isBodyDrawn = false;
@@ -44,47 +44,47 @@ internal class Beetle
 
     #region Methods
 
-    public bool TryAction(Action action)
+    public bool TryAction(Part part)
     {
-        Debug.Log(action);
-        switch (action)
+        Debug.Log(part);
+        switch (part)
         {
-            case Action.Leg:
+            case Part.Leg:
                 if (_isBodyDrawn && _legsLeft > 0)
                 {
                     _legsLeft--;
                     return true;
                 }
                 return false;
-            case Action.Head:
+            case Part.Head:
                 if (_isBodyDrawn && !_isHeadDrawn)
                 {
                     _isHeadDrawn = true;
                     return true;
                 }
                 return false;
-            case Action.Body:
+            case Part.Body:
                 if (!_isBodyDrawn)
                 {
                     _isBodyDrawn = true;
                     return true;
                 }
                 return false;
-            case Action.Antenna:
+            case Part.Antenna:
                 if (_isBodyDrawn && _isHeadDrawn && _antennasLeft > 0)
                 {
                     _antennasLeft--;
                     return true;
                 }
                 return false;
-            case Action.Eye:
+            case Part.Eye:
                 if (_isBodyDrawn && _isHeadDrawn && _eyesLeft > 0)
                 {
                     _eyesLeft--;
                     return true;
                 }
                 return false;
-            case Action.Wing:
+            case Part.Wing:
                 if (_isBodyDrawn && _wingsLeft > 0)
                 {
                     _wingsLeft--;

@@ -14,7 +14,9 @@ internal class Player {
     #region Variables
 
     private readonly Beetle _beetle = new Beetle();
-    private int _score;
+    private float _score;
+
+    private readonly List<float> _previousScores = new List<float>(); 
 
     #endregion
 
@@ -24,11 +26,18 @@ internal class Player {
         get { return _beetle; }
     }
 
-    public int Score
+    public float Score
     {
         get { return _score; }
         set { _score = value; }
     }
+
+    public void ArchiveScore()
+    {
+        _previousScores.Add(_score);
+        _score = 0;
+    }
+
     #endregion
 
     #region Methods

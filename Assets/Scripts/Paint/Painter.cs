@@ -45,6 +45,7 @@ public class Painter : MonoBehaviour
     public EraserTool eraser = new EraserTool();
     private float _ratio = 1;
     private int _paddingLeft;
+    private int _paddingTop;
 
 
     private int _currentCanvasSize;
@@ -77,6 +78,7 @@ public class Painter : MonoBehaviour
             _currentCanvasSize = newSize;
             _ratio = _currentCanvasSize / (float)PaintCanvas.width;
             _paddingLeft = (int)((Screen.width - _currentCanvasSize) * 0.5f);
+            _paddingTop = (int)(Screen.height  * 0.1f);
         }
     }
 
@@ -94,13 +96,13 @@ public class Painter : MonoBehaviour
     void OnGUI()
     {
         if (_lockCount > 0 || !PaintCanvas) return;
-        GUI.DrawTexture(new Rect(_paddingLeft, 0, _currentCanvasSize, _currentCanvasSize), PaintCanvas);
+        GUI.DrawTexture(new Rect(_paddingLeft, _paddingTop, _currentCanvasSize, _currentCanvasSize), PaintCanvas);
     }
 
     void Update()
     {
         if (_lockCount > 0 || !PaintCanvas) return;
-        Rect imgRect = new Rect(_paddingLeft, 0, _currentCanvasSize, _currentCanvasSize);
+        Rect imgRect = new Rect(_paddingLeft, _paddingTop, _currentCanvasSize, _currentCanvasSize);
         Vector2 mouse = Input.mousePosition;
         mouse.y = Screen.height - mouse.y;
 

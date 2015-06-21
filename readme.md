@@ -7,7 +7,7 @@
 
 The game can directly be played from: http://savethecomet.com/proto/beetle/
 
-Already Built Version can be found under Builds folder.
+Build can be downloaded from https://onedrive.live.com/redir?resid=4B53F2E09FD5AEBD!615140&authkey=!ABMdknL1hXlnVa4&ithint=file%2czip
 Index.html can directly be run on any browser or all of the files can be uploaded to a server under the same folder.
 
 # Below Assets Used from other sources;

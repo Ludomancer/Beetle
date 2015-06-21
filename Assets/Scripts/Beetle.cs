@@ -36,7 +36,37 @@ public class Beetle
 
     public bool IsCompleted
     {
-        get { return _legsLeft == 0 && _antennasLeft == 0 && _eyesLeft == 0 && _isHeadDrawn && _isBodyDrawn && _wingsLeft == 0; }
+        get { return LegsLeft == 0 && AntennasLeft == 0 && EyesLeft == 0 && IsHeadDrawn && IsBodyDrawn && WingsLeft == 0; }
+    }
+
+    public int LegsLeft
+    {
+        get { return _legsLeft; }
+    }
+
+    public bool IsHeadDrawn
+    {
+        get { return _isHeadDrawn; }
+    }
+
+    public bool IsBodyDrawn
+    {
+        get { return _isBodyDrawn; }
+    }
+
+    public int AntennasLeft
+    {
+        get { return _antennasLeft; }
+    }
+
+    public int EyesLeft
+    {
+        get { return _eyesLeft; }
+    }
+
+    public int WingsLeft
+    {
+        get { return _wingsLeft; }
     }
 
     #endregion
@@ -49,37 +79,37 @@ public class Beetle
         switch (part)
         {
             case Part.Leg:
-                if (_isBodyDrawn && _legsLeft > 0)
+                if (IsBodyDrawn && LegsLeft > 0)
                 {
                     return true;
                 }
                 return false;
             case Part.Head:
-                if (_isBodyDrawn && !_isHeadDrawn)
+                if (IsBodyDrawn && !IsHeadDrawn)
                 {
                     return true;
                 }
                 return false;
             case Part.Body:
-                if (!_isBodyDrawn)
+                if (!IsBodyDrawn)
                 {
                     return true;
                 }
                 return false;
             case Part.Antenna:
-                if (_isBodyDrawn && _isHeadDrawn && _antennasLeft > 0)
+                if (IsBodyDrawn && IsHeadDrawn && AntennasLeft > 0)
                 {
                     return true;
                 }
                 return false;
             case Part.Eye:
-                if (_isBodyDrawn && _isHeadDrawn && _eyesLeft > 0)
+                if (IsBodyDrawn && IsHeadDrawn && EyesLeft > 0)
                 {
                     return true;
                 }
                 return false;
             case Part.Wing:
-                if (_isBodyDrawn && _wingsLeft > 0)
+                if (IsBodyDrawn && WingsLeft > 0)
                 {
                     return true;
                 }
@@ -101,54 +131,54 @@ public class Beetle
     public bool TryAction(Part part)
     {
         Debug.Log("Try: " + part);
-        Debug.Log("_legsLeft: " + _legsLeft);
-        Debug.Log("_isHeadDrawn: " + _isHeadDrawn);
-        Debug.Log("_isBodyDrawn: " + _isBodyDrawn);
-        Debug.Log("_antennasLeft: " + _antennasLeft);
-        Debug.Log("_eyesLeft: " + _eyesLeft);
-        Debug.Log("_wingsLeft: " + _wingsLeft);
+        Debug.Log("_legsLeft: " + LegsLeft);
+        Debug.Log("_isHeadDrawn: " + IsHeadDrawn);
+        Debug.Log("_isBodyDrawn: " + IsBodyDrawn);
+        Debug.Log("_antennasLeft: " + AntennasLeft);
+        Debug.Log("_eyesLeft: " + EyesLeft);
+        Debug.Log("_wingsLeft: " + WingsLeft);
         Debug.Log("----------------------------------");
         switch (part)
         {
             case Part.Leg:
-                if (_isBodyDrawn && _legsLeft > 0)
+                if (IsBodyDrawn && LegsLeft > 0)
                 {
-                    _legsLeft--;
+                    _legsLeft = LegsLeft - 1;
                     return true;
                 }
                 return false;
             case Part.Head:
-                if (_isBodyDrawn && !_isHeadDrawn)
+                if (IsBodyDrawn && !IsHeadDrawn)
                 {
                     _isHeadDrawn = true;
                     return true;
                 }
                 return false;
             case Part.Body:
-                if (!_isBodyDrawn)
+                if (!IsBodyDrawn)
                 {
                     _isBodyDrawn = true;
                     return true;
                 }
                 return false;
             case Part.Antenna:
-                if (_isBodyDrawn && _isHeadDrawn && _antennasLeft > 0)
+                if (IsBodyDrawn && IsHeadDrawn && AntennasLeft > 0)
                 {
-                    _antennasLeft--;
+                    _antennasLeft = AntennasLeft - 1;
                     return true;
                 }
                 return false;
             case Part.Eye:
-                if (_isBodyDrawn && _isHeadDrawn && _eyesLeft > 0)
+                if (IsBodyDrawn && IsHeadDrawn && EyesLeft > 0)
                 {
-                    _eyesLeft--;
+                    _eyesLeft = EyesLeft - 1;
                     return true;
                 }
                 return false;
             case Part.Wing:
-                if (_isBodyDrawn && _wingsLeft > 0)
+                if (IsBodyDrawn && WingsLeft > 0)
                 {
-                    _wingsLeft--;
+                    _wingsLeft = WingsLeft - 1;
                     return true;
                 }
                 return false;

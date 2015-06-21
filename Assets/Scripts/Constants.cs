@@ -35,6 +35,8 @@ internal static class Constants
     internal const string WING_TEXT = "Wing";
     internal const string ROLL_DICE_TEXT = "Roll Dice";
     internal const string DONE_DRAWING_TEXT = "Done!";
+    internal const string DRAWN_TEXT = " <color=#008000ff>Drawn</color>";
+    internal const string NOT_DRAWN_TEXT = "Not Drawn";
     #endregion
 
     #region Properties

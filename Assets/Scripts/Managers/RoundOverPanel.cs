@@ -106,7 +106,7 @@ internal class RoundOverPanel : MonoBehaviour, IPanel
 
     public void OnNextRoundClicked()
     {
-        GameManager.Instance.Show();
+        GameHUD.Instance.Show();
         GameManager.Instance.Init();
         Hide();
     }

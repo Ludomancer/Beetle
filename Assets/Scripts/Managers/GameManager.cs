@@ -2,10 +2,11 @@
 using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-internal class GameManager : MonoBehaviour, IPanel
+internal class GameManager : MonoBehaviour
 {
     #region Singleton
 
@@ -41,27 +42,30 @@ internal class GameManager : MonoBehaviour, IPanel
 
     #region Events and Delegates
 
+    public Action<Player, int> OnPlayerScoreChanged;
+    public Action<Player, int> OnPlayerBeetleChanged;
+    public Action<Player, int, State> OnGameStateChanged;
     #endregion
 
     #region Variables
-    private Player[] _players = new Player[2] { new Player(), new Player() };
     [SerializeField]
+    private int _numberOfRounds = 5;
+    [SerializeField]
+    private Texture2D _emptyCanvasTexture;
+      [SerializeField]
+    private AudioSource _diceAudioSource;
+      [SerializeField]
+    private AudioSource _successAudioSource;
+
+    private readonly Player[] _players = new Player[2];
     private State _currentState = State.None;
     private int _playerIndex = 0;
     private int _currentRound = 0;
-    [SerializeField]
-    private int _numberOfRounds = 5;
 
     public Button diceButton;
     public Button drawingDoneButton;
-    public Text[] playerScoreTexts;
-    public Text informationText;
-    public Text drawBeetlePartText;
-    public Image[] playerBeetleImages;
 
     public bool debugMode;
-
-    public Texture2D emptyCanvasTexture;
     #endregion
 
     #region Properties
@@ -69,16 +73,6 @@ internal class GameManager : MonoBehaviour, IPanel
     public Player CurrentPlayer
     {
         get { return _players[_playerIndex]; }
-    }
-
-    public Text CurrentScoreText
-    {
-        get { return playerScoreTexts[_playerIndex]; }
-    }
-
-    public Image CurrentBeetleImage
-    {
-        get { return playerBeetleImages[_playerIndex]; }
     }
 
     public State CurrentState
@@ -93,27 +87,23 @@ internal class GameManager : MonoBehaviour, IPanel
                     Painter.Instance.Lock();
                     diceButton.gameObject.SetActive(true);
                     drawingDoneButton.gameObject.SetActive(false);
-                    drawBeetlePartText.gameObject.SetActive(false);
                     break;
                 case State.WaitingDiceRoll:
                     diceButton.interactable = true;
                     Painter.Instance.Lock();
                     diceButton.gameObject.SetActive(true);
                     drawingDoneButton.gameObject.SetActive(false);
-                    drawBeetlePartText.gameObject.SetActive(false);
                     diceButton.GetComponentInChildren<Text>().text = Constants.ROLL_DICE_TEXT;
                     diceButton.GetComponent<Image>().color = Constants.DICE_DEFAULT_COLOR;
-                    informationText.text = string.Format(Constants.PLAYER_TURN_TEXT, (_playerIndex + 1));
                     break;
                 case State.Drawing:
-                    Painter.Instance.PaintCanvas = CurrentBeetleImage.sprite.texture;
+                    Painter.Instance.PaintCanvas = CurrentPlayer.BeetleCanvas;
                     Painter.Instance.Unlock(true);
                     diceButton.gameObject.SetActive(false);
-                    drawBeetlePartText.gameObject.SetActive(true);
                     drawingDoneButton.gameObject.SetActive(true);
-                    informationText.text = "";
                     break;
             }
+            if (OnGameStateChanged != null) OnGameStateChanged(CurrentPlayer, _playerIndex, _currentState);
         }
     }
 
@@ -124,7 +114,7 @@ internal class GameManager : MonoBehaviour, IPanel
     private void Start()
     {
         instance = this;
-        Show();
+        GameHUD.Instance.Show();
         Init();
     }
 
@@ -135,31 +125,21 @@ internal class GameManager : MonoBehaviour, IPanel
         drawingDoneButton.GetComponentInChildren<Text>().text = Constants.DONE_DRAWING_TEXT;
         diceButton.gameObject.SetActive(true);
         diceButton.GetComponentInChildren<Text>().text = Constants.ROLL_DICE_TEXT;
-        for (int i = 0; i < playerBeetleImages.Length; i++)
+        for (int i = 0; i < _players.Length; i++)
         {
-            if (playerBeetleImages[i].sprite) DestroyImmediate(playerBeetleImages[i].sprite);
-            Texture2D tempTexture = Instantiate(emptyCanvasTexture);
-            playerBeetleImages[i].sprite = Sprite.Create(tempTexture, new Rect(0, 0, tempTexture.width, tempTexture.height), new Vector2(0.5f, 0.5f));
-            playerScoreTexts[i].text = "0";
+            if (_players[i]) _players[i].ClearBeetleImage();
+            else _players[i] = new Player(Instantiate(_emptyCanvasTexture));
+            if (OnPlayerScoreChanged != null) OnPlayerScoreChanged(_players[i], i);
+            if (OnPlayerBeetleChanged != null) OnPlayerBeetleChanged(_players[i], i);
         }
 
-        _playerIndex = 0;
+        _playerIndex = Random.Range(0, _players.Length);
         CurrentState = State.WaitingDiceRoll;
     }
 
     private void Update()
     {
 
-    }
-
-    public void Hide()
-    {
-        gameObject.SetActive(false);
-    }
-
-    public void Show()
-    {
-        gameObject.SetActive(true);
     }
 
     private void NextPlayer()
@@ -170,14 +150,14 @@ internal class GameManager : MonoBehaviour, IPanel
 
     public void OnDiceRollClicked()
     {
+        _diceAudioSource.Play();
         diceButton.interactable = false;
         StartCoroutine(RollDiceRotuine());
     }
 
     public void OnDrawCompletedClicked()
     {
-        Texture2D currentTexture2D = Painter.Instance.PaintCanvas;
-        CurrentBeetleImage.sprite = Sprite.Create(currentTexture2D, new Rect(0, 0, currentTexture2D.width, currentTexture2D.height), new Vector2(0.5f, 0.5f));
+        if (OnPlayerBeetleChanged != null) OnPlayerBeetleChanged(CurrentPlayer, _playerIndex);
         if (CurrentPlayer.PlayerBeetle.IsCompleted)
         {
             for (int i = 0; i < _players.Length; i++)
@@ -188,7 +168,7 @@ internal class GameManager : MonoBehaviour, IPanel
             RoundOverPanel.Instance.Init(_currentRound, _numberOfRounds, _players);
             RoundOverPanel.Instance.Show();
             Painter.Instance.Lock();
-            Hide();
+            GameHUD.Instance.Hide();
         }
         else
         {
@@ -197,7 +177,7 @@ internal class GameManager : MonoBehaviour, IPanel
         }
     }
 
-    IEnumerator AddScore(Text playerScoreText, float scoreToAdd)
+    IEnumerator AddScore(float scoreToAdd)
     {
         while (scoreToAdd > 0)
         {
@@ -205,7 +185,7 @@ internal class GameManager : MonoBehaviour, IPanel
             scoreToAdd -= change;
             CurrentPlayer.Score += change;
             if (scoreToAdd < 0) CurrentPlayer.Score += scoreToAdd;
-            playerScoreText.text = CurrentPlayer.Score.ToString("0");
+            if (OnPlayerScoreChanged != null) OnPlayerScoreChanged(CurrentPlayer, _playerIndex);
             yield return null;
         }
     }
@@ -244,11 +224,11 @@ internal class GameManager : MonoBehaviour, IPanel
 
         if (CurrentPlayer.PlayerBeetle.TryAction(dice))
         {
+            _successAudioSource.Play();
             diceButton.GetComponent<Image>().color = Constants.DICE_ROLL_VALID_COLOR;
-            StartCoroutine(AddScore(CurrentScoreText, 50));
-            informationText.text = "50";
-            informationText.GetComponent<Animator>().SetTrigger("Spawn");
-            drawBeetlePartText.text = String.Format(Constants.DRAW_BEETLE_PART, (_playerIndex + 1), partText);
+            StartCoroutine(AddScore(50));
+            GameHUD.Instance.ShowInfoText(50, true);
+            GameHUD.Instance.ShowBeetlePartText(string.Format(Constants.DRAW_BEETLE_PART, (_playerIndex + 1), partText));
             if (debugMode) yield return null; else yield return new WaitForSeconds(1);
             CurrentState = State.Drawing;
         }
